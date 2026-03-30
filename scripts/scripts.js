@@ -15,9 +15,9 @@ import {
   getMetadata,
   loadScript,
   toClassName,
-  toCamelCase
-} from './aem.js';
-import { picture, source, img } from './dom-helpers.js';
+  toCamelCase,
+} from "./aem.js";
+import { picture, source, img } from "./dom-helpers.js";
 
 import {
   getLanguage,
@@ -25,38 +25,38 @@ import {
   setPageLanguage,
   PATH_PREFIX,
   createSource,
-  getHostname
-} from './utils.js';
+  getHostname,
+} from "./utils.js";
 
 const experimentationConfig = {
-	prodHost: 'www.referencedemo.adobe.com',
-	audiences: {
-		mobile: () => window.innerWidth < 600,
-		desktop: () => window.innerWidth >= 600,
-		// define your custom audiences here as needed
-	},
+  prodHost: "www.referencedemo.adobe.com",
+  audiences: {
+    mobile: () => window.innerWidth < 600,
+    desktop: () => window.innerWidth >= 600,
+    // define your custom audiences here as needed
+  },
 };
 import {
-	runExperimentation,
-	showExperimentationRail,
-} from './experiment-load.js';
+  runExperimentation,
+  showExperimentationRail,
+} from "./experiment-load.js";
 
 function addPreconnect(origin) {
   try {
     if (!origin) return;
     const href = String(origin);
-    if (!href.startsWith('http')) return;
-    if (document.querySelector(`link[rel="preconnect"][href="${href}"]`)) return;
-    const link = document.createElement('link');
-    link.rel = 'preconnect';
+    if (!href.startsWith("http")) return;
+    if (document.querySelector(`link[rel="preconnect"][href="${href}"]`))
+      return;
+    const link = document.createElement("link");
+    link.rel = "preconnect";
     link.href = href;
-    link.crossOrigin = '';
+    link.crossOrigin = "";
     document.head.appendChild(link);
   } catch (e) {
     /* noop */
   }
 }
-
 
 /**
  * Moves all the attributes from a given elmenet to another given element.
@@ -78,9 +78,9 @@ export function moveAttributes(from, to, attributes) {
 }
 
 export function isAuthorEnvironment() {
-  if(window?.location?.origin?.includes('author')){
+  if (window?.location?.origin?.includes("author")) {
     return true;
-  }else{
+  } else {
     return false;
   }
   /*
@@ -101,7 +101,10 @@ export function moveInstrumentation(from, to) {
     to,
     [...from.attributes]
       .map(({ nodeName }) => nodeName)
-      .filter((attr) => attr.startsWith('data-aue-') || attr.startsWith('data-richtext-')),
+      .filter(
+        (attr) =>
+          attr.startsWith("data-aue-") || attr.startsWith("data-richtext-"),
+      ),
   );
 }
 
@@ -111,7 +114,8 @@ export function moveInstrumentation(from, to) {
 async function loadFonts() {
   await loadCSS(`${window.hlx.codeBasePath}/styles/fonts.css`);
   try {
-    if (!window.location.hostname.includes('localhost')) sessionStorage.setItem('fonts-loaded', 'true');
+    if (!window.location.hostname.includes("localhost"))
+      sessionStorage.setItem("fonts-loaded", "true");
   } catch (e) {
     // do nothing
   }
@@ -128,13 +132,16 @@ export async function fetchLanguagePlaceholders() {
     return await fetchPlaceholders(`${PATH_PREFIX}/${langCode}`);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(`Error fetching placeholders for lang: ${langCode}. Will try to get en placeholders`, error);
+    console.error(
+      `Error fetching placeholders for lang: ${langCode}. Will try to get en placeholders`,
+      error,
+    );
     // Retry without specifying a language (using the default language)
     try {
       return await fetchPlaceholders(`${PATH_PREFIX}/en`);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error fetching placeholders:', err);
+      console.error("Error fetching placeholders:", err);
     }
   }
   return {}; // default to empty object
@@ -149,7 +156,7 @@ function buildAutoBlocks() {
     // TODO: add auto block, if needed
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Auto Blocking failed', error);
+    console.error("Auto Blocking failed", error);
   }
 }
 
@@ -159,9 +166,9 @@ function buildAutoBlocks() {
  * Idempotent: will not duplicate if already enhanced.
  */
 function decorateSectionImages(doc) {
-  const sections = doc.querySelectorAll('main .section[data-image]');
+  const sections = doc.querySelectorAll("main .section[data-image]");
   sections.forEach((section) => {
-    if (section.querySelector('picture.section-bg')) return; // already enhanced
+    if (section.querySelector("picture.section-bg")) return; // already enhanced
 
     const desktopSrc = section.dataset.image?.trim();
     if (!desktopSrc) return;
@@ -170,7 +177,7 @@ function decorateSectionImages(doc) {
     const mobileSrc = section.dataset.mobImage?.trim();
 
     const pic = picture();
-    pic.className = 'section-bg';
+    pic.className = "section-bg";
 
     // WebP sources for breakpoints (prefer authored overrides if present)
     const desktopCandidate = desktopSrc;
@@ -179,23 +186,52 @@ function decorateSectionImages(doc) {
 
     // Desktop
     try {
-      pic.appendChild(source({ srcset: `${new URL(desktopCandidate, window.location.href).pathname}?width=1400&format=webply&optimize=medium`, type: 'image/webp', media: '(min-width: 992px)' }));
-    } catch (e) { /* ignore malformed URL */ }
+      pic.appendChild(
+        source({
+          srcset: `${new URL(desktopCandidate, window.location.href).pathname}?width=1400&format=webply&optimize=medium`,
+          type: "image/webp",
+          media: "(min-width: 992px)",
+        }),
+      );
+    } catch (e) {
+      /* ignore malformed URL */
+    }
     // Tablet
     try {
-      pic.appendChild(source({ srcset: `${new URL(tabletCandidate, window.location.href).pathname}?width=1024&format=webply&optimize=medium`, type: 'image/webp', media: '(min-width: 768px)' }));
-    } catch (e) { /* ignore malformed URL */ }
+      pic.appendChild(
+        source({
+          srcset: `${new URL(tabletCandidate, window.location.href).pathname}?width=1024&format=webply&optimize=medium`,
+          type: "image/webp",
+          media: "(min-width: 768px)",
+        }),
+      );
+    } catch (e) {
+      /* ignore malformed URL */
+    }
     // Mobile
     try {
-      pic.appendChild(source({ srcset: `${new URL(mobileCandidate, window.location.href).pathname}?width=768&format=webply&optimize=medium`, type: 'image/webp', media: '(min-width: 320px)' }));
-    } catch (e) { /* ignore malformed URL */ }
+      pic.appendChild(
+        source({
+          srcset: `${new URL(mobileCandidate, window.location.href).pathname}?width=768&format=webply&optimize=medium`,
+          type: "image/webp",
+          media: "(min-width: 320px)",
+        }),
+      );
+    } catch (e) {
+      /* ignore malformed URL */
+    }
 
     // Fallback <img> uses authored URL (keeps original format/params)
-    const fallbackImg = img({ src: desktopSrc, alt: '', class: 'sec-img', loading: 'lazy' });
+    const fallbackImg = img({
+      src: desktopSrc,
+      alt: "",
+      class: "sec-img",
+      loading: "lazy",
+    });
     pic.appendChild(fallbackImg);
 
     // Mark and insert as first child
-    section.classList.add('section-has-bg');
+    section.classList.add("section-has-bg");
     section.prepend(pic);
 
     // Compute and lock section height to image height (based on current width)
@@ -204,7 +240,7 @@ function decorateSectionImages(doc) {
         const ratio = fallbackImg.naturalHeight / fallbackImg.naturalWidth;
         const width = section.getBoundingClientRect().width;
         const height = Math.round(width * ratio);
-        section.style.minHeight = '';
+        section.style.minHeight = "";
         section.style.height = `${height}px`;
       }
     };
@@ -212,13 +248,13 @@ function decorateSectionImages(doc) {
     if (fallbackImg.complete) {
       updateHeight();
     } else {
-      fallbackImg.addEventListener('load', updateHeight, { once: true });
+      fallbackImg.addEventListener("load", updateHeight, { once: true });
     }
 
     // Recalculate on viewport changes
     const onResize = () => updateHeight();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
   });
 }
 
@@ -227,21 +263,26 @@ function decorateSectionImages(doc) {
  * @param {Element} main The container element
  */
 function decorateButtons(main) {
-  main.querySelectorAll('img').forEach((img) => {
+  main.querySelectorAll("img").forEach((img) => {
     let altT = decodeURIComponent(img.alt);
 
-    if (altT && altT.includes('https://delivery-')) {
+    if (altT && altT.includes("https://delivery-")) {
       try {
         altT = JSON.parse(altT);
         const { altText, deliveryUrl } = altT;
         const url = new URL(deliveryUrl);
-        const imgName = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+        const imgName = url.pathname.substring(
+          url.pathname.lastIndexOf("/") + 1,
+        );
         const block = whatBlockIsThis(img);
         const bp = getMetadata(block);
-        let breakpoints = [{ media: '(min-width: 600px)', width: '2000' }, { width: '750' }];
+        let breakpoints = [
+          { media: "(min-width: 600px)", width: "2000" },
+          { width: "750" },
+        ];
         if (bp) {
-          const bps = bp.split('|');
-          const bpS = bps.map((b) => b.split(',').map((p) => p.trim()));
+          const bps = bp.split("|");
+          const bpS = bps.map((b) => b.split(",").map((p) => p.trim()));
           breakpoints = bpS.map((n) => {
             const obj = {};
             n.forEach((i) => {
@@ -251,23 +292,26 @@ function decorateButtons(main) {
             return obj;
           });
         } else {
-          const format = getMetadata(imgName.toLowerCase().replace('.', '-'));
-          const formats = format.split('|');
+          const format = getMetadata(imgName.toLowerCase().replace(".", "-"));
+          const formats = format.split("|");
           const formatObj = {};
           formats.forEach((i) => {
-            const [a, b] = i.split('=');
+            const [a, b] = i.split("=");
             formatObj[a] = b;
           });
-          breakpoints = breakpoints.map((n) => (
-            { ...n, ...formatObj }
-          ));
+          breakpoints = breakpoints.map((n) => ({ ...n, ...formatObj }));
         }
-        const picture = createOptimizedPicture(deliveryUrl, altText, false, breakpoints);
+        const picture = createOptimizedPicture(
+          deliveryUrl,
+          altText,
+          false,
+          breakpoints,
+        );
         img.parentElement.replaceWith(picture);
       } catch (error) {
-        img.setAttribute('style', 'border:5px solid red');
-        img.setAttribute('data-asset-type', 'video');
-        img.setAttribute('title', 'Update block to render video.');
+        img.setAttribute("style", "border:5px solid red");
+        img.setAttribute("data-asset-type", "video");
+        img.setAttribute("title", "Update block to render video.");
       }
     }
   });
@@ -289,25 +333,25 @@ export function decorateMain(main) {
   decorateDMImages(main);
 }
 
-
 async function renderWBDataLayer() {
-  
   //const config = await fetchPlaceholders();
-  const lastPubDateStr = getMetadata('published-time');
-  const firstPubDateStr = getMetadata('content_date') || lastPubDateStr;
+  const lastPubDateStr = getMetadata("published-time");
+  const firstPubDateStr = getMetadata("content_date") || lastPubDateStr;
   const hostnameFromPlaceholders = await getHostname();
   window.wbgData.page = {
     pageInfo: {
-      pageCategory: getMetadata('pagecategory'),
-      channel: getMetadata('channel'),
-      themecfreference: getMetadata('theme_cf_reference'),
-      contentType: getMetadata('content_type'),
-      pageUid: getMetadata('pageuid'),
-      pageName: getMetadata('pagename'),
-      hostName: hostnameFromPlaceholders ? hostnameFromPlaceholders : getMetadata('hostname'),
+      pageCategory: getMetadata("pagecategory"),
+      channel: getMetadata("channel"),
+      themecfreference: getMetadata("theme_cf_reference"),
+      contentType: getMetadata("content_type"),
+      pageUid: getMetadata("pageuid"),
+      pageName: getMetadata("pagename"),
+      hostName: hostnameFromPlaceholders
+        ? hostnameFromPlaceholders
+        : getMetadata("hostname"),
       pageFirstPub: formatDate(firstPubDateStr),
       pageLastMod: formatDate(lastPubDateStr),
-      webpackage: '',
+      webpackage: "",
     },
   };
 }
@@ -322,7 +366,7 @@ async function loadEager(doc) {
   // Preconnect dynamically to speed up LCP fetch without hardcoding hosts
   try {
     addPreconnect(window.location.origin);
-    const lcpImg = doc.querySelector('main img');
+    const lcpImg = doc.querySelector("main img");
     if (lcpImg?.src) {
       const u = new URL(lcpImg.src, window.location.href);
       addPreconnect(u.origin);
@@ -332,16 +376,16 @@ async function loadEager(doc) {
   }
   decorateTemplateAndTheme();
   renderWBDataLayer();
-  const main = doc.querySelector('main');
+  const main = doc.querySelector("main");
   if (main) {
     decorateMain(main);
-    document.body.classList.add('appear');
-    await loadSection(main.querySelector('.section'), waitForFirstImage);
+    document.body.classList.add("appear");
+    await loadSection(main.querySelector(".section"), waitForFirstImage);
   }
 
   try {
     /* if desktop (proxy for fast connection) or fonts already loaded, load fonts.css */
-    if (window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded')) {
+    if (window.innerWidth >= 900 || sessionStorage.getItem("fonts-loaded")) {
       loadFonts();
     }
   } catch (e) {
@@ -398,14 +442,14 @@ async function loadEager(doc) {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  const main = doc.querySelector('main');
+  const main = doc.querySelector("main");
   await loadSections(main);
   decorateSectionImages(doc);
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
-  loadHeader(doc.querySelector('header'));
-  loadFooter(doc.querySelector('footer'));
+  loadHeader(doc.querySelector("header"));
+  loadFooter(doc.querySelector("footer"));
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
@@ -420,7 +464,8 @@ export function getMetadataUrl(url) {
   try {
     // Pattern to match: /adobe/assets/urn:aaid:aem:[uuid]
     // UUID format: 8-4-4-4-12 hexadecimal characters
-    const urnPattern = /(\/adobe\/assets\/urn:aaid:aem:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i;
+    const urnPattern =
+      /(\/adobe\/assets\/urn:aaid:aem:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i;
     const match = url.match(urnPattern);
 
     if (!match) {
@@ -434,242 +479,242 @@ export function getMetadataUrl(url) {
     // Construct the metadata URL
     return `${baseUrl}${match[1]}/metadata`;
   } catch (error) {
-    console.error('Error creating metadata URL:', error);
+    console.error("Error creating metadata URL:", error);
     return null;
   }
 }
 
 /**
-   * Decorates Dynamic Media images by modifying their URLs to include specific parameters
-   * and creating a <picture> element with different sources for different image formats and sizes.
-   *
-   * @param {HTMLElement} main - The main container element that includes the links to be processed.
-   */
-  export async function decorateDMImages(main) {
-	
-	const allBlocks = Array.from(main.querySelectorAll('.dm-openapi, .dynamic-media-image'));
+ * Decorates Dynamic Media images by modifying their URLs to include specific parameters
+ * and creating a <picture> element with different sources for different image formats and sizes.
+ *
+ * @param {HTMLElement} main - The main container element that includes the links to be processed.
+ */
+export async function decorateDMImages(main) {
+  const allBlocks = Array.from(
+    main.querySelectorAll(".dm-openapi, .dynamic-media-image"),
+  );
 
-	for (const block of allBlocks) {
-	  	const links = block.querySelectorAll('a[href]');
-		// If no links exist, hide everything else within the block
-		if (links.length === 0) {
-			Array.from(block.children).forEach((child) => {
-				child.style.display = 'none';
-			});
-		}
-	}
-
-	const links = Array.from(main.querySelectorAll('a[href]'));
-
-	for (const a of links) {
-	  let href = a.href;
-	  const hrefLower = href.toLowerCase();
-	  if (!isDMOpenAPIUrl(href)) continue;
-  
-	  const isGifFile = hrefLower.endsWith('.gif');
-	  const containsOriginal = href.includes('/original/');
-	  const dmOpenApiDiv = a.closest('.dm-openapi') || a.closest('.dynamic-media-image');
-  
-	  if (!dmOpenApiDiv) continue;
-  
-	  // Skip non-originals except GIF, as per your logic
-	  if (containsOriginal && !isGifFile) continue;
-  
-	  const blockBeingDecorated = whatBlockIsThis(a);
-	  let blockName = '';
-	  let rotate = '';
-	  let flip = '';
-	  let cropValue = '';
-	  let preset = '';
-	  let extend = '';
-	  let backgroundcolor = '';
-	  let enableSmartCrop = '';
-  
-	  if (blockBeingDecorated) {
-		blockName = Array.from(blockBeingDecorated.classList).find(
-		  (className) => className !== 'block'
-		) || '';
-	  }
-  
-	  // Early exclude videos
-	  const videoExtensions = ['.mp4', '.mov', '.webm', '.ogg', '.m4v', '.mkv'];
-	  const isVideoAsset = videoExtensions.some((ext) => hrefLower.includes(ext));
-	  if (isVideoAsset || blockName === 'video') continue;
-	  
-	  // Extract advanced modifiers only for dynamic-media blocks
-	  if (blockName === 'dm-openapi' || blockName === 'dynamic-media-image') {
-		const parentDiv = a.closest('div');
-		if (parentDiv && parentDiv.parentElement) {
-		  const container = parentDiv.parentElement;
-		  const siblings = [];
-		  let current = container.nextElementSibling;
-  
-		  // Collect up to 4 siblings (preset, rotate, flip, crop) in order
-		  while (current && siblings.length < 7) {
-			siblings.push(current);
-			current = current.nextElementSibling;
-		  }
-  
-		  // Helper to safely consume a sibling element's trimmed text and remove it
-		  const consumeSiblingText = (el) => {
-			if (!el) return '';
-			const text = el.textContent?.trim() || '';
-			if (text) el.remove();
-			return text;
-		  };
-  
-		  // Order matters: preset, rotate, flip, crop
-		  if (siblings.length > 0) {
-			enableSmartCrop = consumeSiblingText(siblings.shift()) || false;
-			preset = consumeSiblingText(siblings.shift());
-			extend = consumeSiblingText(siblings.shift());
-			backgroundcolor = consumeSiblingText(siblings.shift());
-			rotate = consumeSiblingText(siblings.shift());
-			flip = consumeSiblingText(siblings.shift());
-			cropValue = consumeSiblingText(siblings.shift());
-		  }
-		}
-  
-		// Remove direct child divs once (minimize DOM thrash)
-		const directChildDivs = dmOpenApiDiv.querySelectorAll(':scope > div');
-		directChildDivs.forEach((div) => div.remove());
-	  }
-	  
-
-	   // Build advanced modifier parameters for Dynamic Media URL
-	   const buildAdvanceModifierParams = () => {
-		const params = [];
-		
-		// Add rotation parameter
-		if (rotate) {
-		  params.push(`rotate=${encodeURIComponent(rotate)}`);
-		}
-		
-		// Add flip parameter
-		if (flip) {
-		  params.push(`flip=${encodeURIComponent(flip.toLowerCase())}`);
-		}
-		
-		// Add crop parameter
-		if (cropValue) {
-		  params.push(`crop=${encodeURIComponent(cropValue.toLowerCase())}`);
-		}
-		
-		// Handle preset parameter with special logic for 'border' preset
-		if (preset) {
-		  const presetLower = preset.toLowerCase();
-		  
-		  if (presetLower === 'border') {
-			// Border preset can include extend and background-color
-			if (extend && backgroundcolor) {
-			  const bgColor = backgroundcolor.replace('#', '');
-			  params.push(`extend=${encodeURIComponent(extend)}`);
-			  params.push(`background-color=rgb,${encodeURIComponent(bgColor)}`);
-			} else if (extend) {
-			  params.push(`extend=${encodeURIComponent(extend)}`);
-			}
-		  }
-		  else if (presetLower === 'grayscale') {
-			  params.push(`saturation=-100`);
-		  } else {
-			// Regular preset
-			params.push(`preset=${encodeURIComponent(preset)}`);
-		  }
-		}
-		// Join all parameters with '&' and prepend '&' if there are any
-		return params.length > 0 ? `&${params.join('&')}` : '';
-	  };
-	  
-	  const advanceModifierParams = buildAdvanceModifierParams();
-	  const originalUrl = new URL(href);
-	  const hasQueryParams = originalUrl.toString().includes('?');
-	  const paramSeparator = hasQueryParams ? '&' : '?';
-	  const baseParams = `${paramSeparator}quality=85&preferwebp=true${advanceModifierParams}`;
-	  const pic = document.createElement('picture');
-  
-  
-	  // Only add smart crop sources if enableSmartCrop is true
-	  if (enableSmartCrop === true || enableSmartCrop === 'true') {
-		  const metadataUrl = getMetadataUrl(href);
-		  if (!metadataUrl) continue;
-  
-		  let metadata;
-		  try {
-			const response = await fetch(metadataUrl);
-			if (!response.ok) {
-			  console.error(`Failed to fetch metadata: ${response.status}`);
-			  continue;
-			}
-			metadata = await response.json();
-		  } catch (error) {
-			console.error('Error fetching or processing metadata:', error);
-			continue;
-		  }
-  
-		  const smartcrops = metadata?.repositoryMetadata?.smartcrops;
-		  const mimeType = metadata?.repositoryMetadata?.["dc:format"];
-		  if (smartcrops){
-				// Build picture and sources
-				pic.style.textAlign = 'center';
-		
-				const cropKeys = Object.keys(smartcrops);
-				if (!cropKeys.length) continue;
-		
-				// Sort crop keys by width desc (largest → smallest)
-				const cropOrder = cropKeys.sort((a, b) => {
-					const widthA = parseInt(smartcrops[a].width, 10) || 0;
-					const widthB = parseInt(smartcrops[b].width, 10) || 0;
-					return widthB - widthA;
-				});
-		
-				const largestCropWidth = Math.max(
-					...cropOrder.map((cropName) =>
-					parseInt(smartcrops[cropName].width, 10) || 0
-					)
-				);
-		
-				const extraLargeBreakpoint = Math.max(largestCropWidth + 1, 1300);
-		
-				// Extra-large screen source (no smartcrop)
-				const sourceWebpExtraLarge = document.createElement('source');
-				sourceWebpExtraLarge.type = 'image/webp';
-				sourceWebpExtraLarge.srcset = `${originalUrl}${baseParams}`;
-				sourceWebpExtraLarge.media = `(min-width: ${extraLargeBreakpoint}px)`;
-				pic.appendChild(sourceWebpExtraLarge);
-		
-				// Smartcrop sources
-				cropOrder.forEach((cropName) => {
-					const crop = smartcrops[cropName];
-					if (!crop) return;
-		
-					const minWidth = parseInt(crop.width, 10) || 0;
-					const smartcropParam = `${paramSeparator}smartcrop=${encodeURIComponent(
-					cropName
-					)}`;
-		
-					const sourceWebp = document.createElement('source');
-					sourceWebp.type = mimeType ? mimeType : "image/webp";
-					sourceWebp.srcset = `${originalUrl}${smartcropParam}&quality=85&preferwebp=true${advanceModifierParams}`;
-					if (minWidth > 0) {
-					sourceWebp.media = `(min-width: ${minWidth}px)`;
-					}
-		
-					pic.appendChild(sourceWebp);
-				});
-			}
-	  }
-  
-	  // Fallback 
-	  const fallbackUrl = `${originalUrl}${baseParams}`;
-	  const img = document.createElement('img');
-	  img.loading = 'lazy';
-	  img.src = fallbackUrl;
-	  //img.alt = href !== a.title ? a.title || '' : '';
-  
-	  pic.appendChild(img);
-	  dmOpenApiDiv.appendChild(pic);
-	}
+  for (const block of allBlocks) {
+    const links = block.querySelectorAll("a[href]");
+    // If no links exist, hide everything else within the block
+    if (links.length === 0) {
+      Array.from(block.children).forEach((child) => {
+        child.style.display = "none";
+      });
+    }
   }
+
+  const links = Array.from(main.querySelectorAll("a[href]"));
+
+  for (const a of links) {
+    let href = a.href;
+    const hrefLower = href.toLowerCase();
+    if (!isDMOpenAPIUrl(href)) continue;
+
+    const isGifFile = hrefLower.endsWith(".gif");
+    const containsOriginal = href.includes("/original/");
+    const dmOpenApiDiv =
+      a.closest(".dm-openapi") || a.closest(".dynamic-media-image");
+
+    if (!dmOpenApiDiv) continue;
+
+    // Skip non-originals except GIF, as per your logic
+    if (containsOriginal && !isGifFile) continue;
+
+    const blockBeingDecorated = whatBlockIsThis(a);
+    let blockName = "";
+    let rotate = "";
+    let flip = "";
+    let cropValue = "";
+    let preset = "";
+    let extend = "";
+    let backgroundcolor = "";
+    let enableSmartCrop = "";
+
+    if (blockBeingDecorated) {
+      blockName =
+        Array.from(blockBeingDecorated.classList).find(
+          (className) => className !== "block",
+        ) || "";
+    }
+
+    // Early exclude videos
+    const videoExtensions = [".mp4", ".mov", ".webm", ".ogg", ".m4v", ".mkv"];
+    const isVideoAsset = videoExtensions.some((ext) => hrefLower.includes(ext));
+    if (isVideoAsset || blockName === "video") continue;
+
+    // Extract advanced modifiers only for dynamic-media blocks
+    if (blockName === "dm-openapi" || blockName === "dynamic-media-image") {
+      const parentDiv = a.closest("div");
+      if (parentDiv && parentDiv.parentElement) {
+        const container = parentDiv.parentElement;
+        const siblings = [];
+        let current = container.nextElementSibling;
+
+        // Collect up to 4 siblings (preset, rotate, flip, crop) in order
+        while (current && siblings.length < 7) {
+          siblings.push(current);
+          current = current.nextElementSibling;
+        }
+
+        // Helper to safely consume a sibling element's trimmed text and remove it
+        const consumeSiblingText = (el) => {
+          if (!el) return "";
+          const text = el.textContent?.trim() || "";
+          if (text) el.remove();
+          return text;
+        };
+
+        // Order matters: preset, rotate, flip, crop
+        if (siblings.length > 0) {
+          enableSmartCrop = consumeSiblingText(siblings.shift()) || false;
+          preset = consumeSiblingText(siblings.shift());
+          extend = consumeSiblingText(siblings.shift());
+          backgroundcolor = consumeSiblingText(siblings.shift());
+          rotate = consumeSiblingText(siblings.shift());
+          flip = consumeSiblingText(siblings.shift());
+          cropValue = consumeSiblingText(siblings.shift());
+        }
+      }
+
+      // Remove direct child divs once (minimize DOM thrash)
+      const directChildDivs = dmOpenApiDiv.querySelectorAll(":scope > div");
+      directChildDivs.forEach((div) => div.remove());
+    }
+
+    // Build advanced modifier parameters for Dynamic Media URL
+    const buildAdvanceModifierParams = () => {
+      const params = [];
+
+      // Add rotation parameter
+      if (rotate) {
+        params.push(`rotate=${encodeURIComponent(rotate)}`);
+      }
+
+      // Add flip parameter
+      if (flip) {
+        params.push(`flip=${encodeURIComponent(flip.toLowerCase())}`);
+      }
+
+      // Add crop parameter
+      if (cropValue) {
+        params.push(`crop=${encodeURIComponent(cropValue.toLowerCase())}`);
+      }
+
+      // Handle preset parameter with special logic for 'border' preset
+      if (preset) {
+        const presetLower = preset.toLowerCase();
+
+        if (presetLower === "border") {
+          // Border preset can include extend and background-color
+          if (extend && backgroundcolor) {
+            const bgColor = backgroundcolor.replace("#", "");
+            params.push(`extend=${encodeURIComponent(extend)}`);
+            params.push(`background-color=rgb,${encodeURIComponent(bgColor)}`);
+          } else if (extend) {
+            params.push(`extend=${encodeURIComponent(extend)}`);
+          }
+        } else if (presetLower === "grayscale") {
+          params.push(`saturation=-100`);
+        } else {
+          // Regular preset
+          params.push(`preset=${encodeURIComponent(preset)}`);
+        }
+      }
+      // Join all parameters with '&' and prepend '&' if there are any
+      return params.length > 0 ? `&${params.join("&")}` : "";
+    };
+
+    const advanceModifierParams = buildAdvanceModifierParams();
+    const originalUrl = new URL(href);
+    const hasQueryParams = originalUrl.toString().includes("?");
+    const paramSeparator = hasQueryParams ? "&" : "?";
+    const baseParams = `${paramSeparator}quality=85&preferwebp=true${advanceModifierParams}`;
+    const pic = document.createElement("picture");
+
+    // Only add smart crop sources if enableSmartCrop is true
+    if (enableSmartCrop === true || enableSmartCrop === "true") {
+      const metadataUrl = getMetadataUrl(href);
+      if (!metadataUrl) continue;
+
+      let metadata;
+      try {
+        const response = await fetch(metadataUrl);
+        if (!response.ok) {
+          console.error(`Failed to fetch metadata: ${response.status}`);
+          continue;
+        }
+        metadata = await response.json();
+      } catch (error) {
+        console.error("Error fetching or processing metadata:", error);
+        continue;
+      }
+
+      const smartcrops = metadata?.repositoryMetadata?.smartcrops;
+      const mimeType = metadata?.repositoryMetadata?.["dc:format"];
+      if (smartcrops) {
+        // Build picture and sources
+        pic.style.textAlign = "center";
+
+        const cropKeys = Object.keys(smartcrops);
+        if (!cropKeys.length) continue;
+
+        // Sort crop keys by width desc (largest → smallest)
+        const cropOrder = cropKeys.sort((a, b) => {
+          const widthA = parseInt(smartcrops[a].width, 10) || 0;
+          const widthB = parseInt(smartcrops[b].width, 10) || 0;
+          return widthB - widthA;
+        });
+
+        const largestCropWidth = Math.max(
+          ...cropOrder.map(
+            (cropName) => parseInt(smartcrops[cropName].width, 10) || 0,
+          ),
+        );
+
+        const extraLargeBreakpoint = Math.max(largestCropWidth + 1, 1300);
+
+        // Extra-large screen source (no smartcrop)
+        const sourceWebpExtraLarge = document.createElement("source");
+        sourceWebpExtraLarge.type = "image/webp";
+        sourceWebpExtraLarge.srcset = `${originalUrl}${baseParams}`;
+        sourceWebpExtraLarge.media = `(min-width: ${extraLargeBreakpoint}px)`;
+        pic.appendChild(sourceWebpExtraLarge);
+
+        // Smartcrop sources
+        cropOrder.forEach((cropName) => {
+          const crop = smartcrops[cropName];
+          if (!crop) return;
+
+          const minWidth = parseInt(crop.width, 10) || 0;
+          const smartcropParam = `${paramSeparator}smartcrop=${encodeURIComponent(
+            cropName,
+          )}`;
+
+          const sourceWebp = document.createElement("source");
+          sourceWebp.type = mimeType ? mimeType : "image/webp";
+          sourceWebp.srcset = `${originalUrl}${smartcropParam}&quality=85&preferwebp=true${advanceModifierParams}`;
+          if (minWidth > 0) {
+            sourceWebp.media = `(min-width: ${minWidth}px)`;
+          }
+
+          pic.appendChild(sourceWebp);
+        });
+      }
+    }
+
+    // Fallback
+    const fallbackUrl = `${originalUrl}${baseParams}`;
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.src = fallbackUrl;
+    //img.alt = href !== a.title ? a.title || '' : '';
+
+    pic.appendChild(img);
+    dmOpenApiDiv.appendChild(pic);
+  }
+}
 
 /**
  * Decorates Dynamic Media video blocks by finding video asset links
@@ -678,10 +723,10 @@ export function getMetadataUrl(url) {
  * @param {HTMLElement} main - The main container element that includes the video blocks.
  */
 export async function decorateDMVideos(main) {
-  const videoBlocks = main.querySelectorAll('.dynamic-media-video');
+  const videoBlocks = main.querySelectorAll(".dynamic-media-video");
 
   for (const block of videoBlocks) {
-    const links = Array.from(block.querySelectorAll('a[href]'));
+    const links = Array.from(block.querySelectorAll("a[href]"));
 
     for (const a of links) {
       const href = a.href;
@@ -691,17 +736,19 @@ export async function decorateDMVideos(main) {
       if (!isDMOpenAPIUrl(href)) continue;
 
       // Check if this is a DM player URL (ends with /play)
-      const isDMPlayerUrl = href.includes('/play');
+      const isDMPlayerUrl = href.includes("/play");
 
       // Check if this is a video file
-      const videoExtensions = ['.mp4', '.mov', '.webm', '.ogg', '.m4v', '.mkv'];
-      const isVideoAsset = videoExtensions.some((ext) => hrefLower.includes(ext));
+      const videoExtensions = [".mp4", ".mov", ".webm", ".ogg", ".m4v", ".mkv"];
+      const isVideoAsset = videoExtensions.some((ext) =>
+        hrefLower.includes(ext),
+      );
 
       // Must be either a DM player URL or a video file
       if (!isDMPlayerUrl && !isVideoAsset) continue;
 
       // Extract video options from authored content
-      const parentDiv = a.closest('div');
+      const parentDiv = a.closest("div");
       const container = parentDiv?.parentElement;
       const siblings = [];
 
@@ -716,20 +763,24 @@ export async function decorateDMVideos(main) {
 
       // Helper to safely consume a sibling element's trimmed text and remove it
       const consumeSiblingText = (el) => {
-        if (!el) return '';
-        const text = el.textContent?.trim() || '';
+        if (!el) return "";
+        const text = el.textContent?.trim() || "";
         if (text) el.remove();
         return text;
       };
 
       // Extract video options: title, autoplay, loop, muted
-      const videoTitle = consumeSiblingText(siblings.shift()) || 'Dynamic Media Video';
-      const autoplay = consumeSiblingText(siblings.shift())?.toLowerCase() === 'true';
-      const loop = consumeSiblingText(siblings.shift())?.toLowerCase() === 'true';
-      const muted = consumeSiblingText(siblings.shift())?.toLowerCase() === 'true';
+      const videoTitle =
+        consumeSiblingText(siblings.shift()) || "Dynamic Media Video";
+      const autoplay =
+        consumeSiblingText(siblings.shift())?.toLowerCase() === "true";
+      const loop =
+        consumeSiblingText(siblings.shift())?.toLowerCase() === "true";
+      const muted =
+        consumeSiblingText(siblings.shift())?.toLowerCase() === "true";
 
       // Clear block content
-      const directChildDivs = block.querySelectorAll(':scope > div');
+      const directChildDivs = block.querySelectorAll(":scope > div");
       directChildDivs.forEach((div) => div.remove());
 
       if (isDMPlayerUrl) {
@@ -739,82 +790,87 @@ export async function decorateDMVideos(main) {
 
         // Add query parameters for player options
         const params = new URLSearchParams();
-        if (autoplay) params.set('autoplay', '1');
-        if (loop) params.set('loop', '1');
-        if (muted || autoplay) params.set('muted', '1'); // Mute if autoplay for browser policy
+        if (autoplay) params.set("autoplay", "1");
+        if (loop) params.set("loop", "1");
+        if (muted || autoplay) params.set("muted", "1"); // Mute if autoplay for browser policy
 
         const paramString = params.toString();
         if (paramString) {
-          playerUrl += (playerUrl.includes('?') ? '&' : '?') + paramString;
+          playerUrl += (playerUrl.includes("?") ? "&" : "?") + paramString;
         }
 
         // Create responsive iframe wrapper
-        const iframeWrapper = document.createElement('div');
-        iframeWrapper.className = 'dm-video-player-wrapper';
-        iframeWrapper.style.cssText = 'position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;';
+        const iframeWrapper = document.createElement("div");
+        iframeWrapper.className = "dm-video-player-wrapper";
+        iframeWrapper.style.cssText =
+          "position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;";
 
-        const iframe = document.createElement('iframe');
+        const iframe = document.createElement("iframe");
         iframe.src = playerUrl;
         iframe.title = videoTitle;
-        iframe.setAttribute('frameborder', '0');
-        iframe.setAttribute('allowfullscreen', '');
-        iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; encrypted-media');
-        iframe.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;';
+        iframe.setAttribute("frameborder", "0");
+        iframe.setAttribute("allowfullscreen", "");
+        iframe.setAttribute(
+          "allow",
+          "autoplay; fullscreen; picture-in-picture; encrypted-media",
+        );
+        iframe.style.cssText =
+          "position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;";
 
         iframeWrapper.appendChild(iframe);
         block.appendChild(iframeWrapper);
-        block.dataset.videoLoaded = 'true';
+        block.dataset.videoLoaded = "true";
 
-        iframe.addEventListener('load', () => {
-          block.dataset.videoLoaded = 'true';
+        iframe.addEventListener("load", () => {
+          block.dataset.videoLoaded = "true";
         });
 
-        iframe.addEventListener('error', () => {
-          console.error('Error loading DM video player:', playerUrl);
-          block.dataset.videoLoaded = 'error';
+        iframe.addEventListener("error", () => {
+          console.error("Error loading DM video player:", playerUrl);
+          block.dataset.videoLoaded = "error";
         });
       } else {
         // Raw video file - use HTML5 video element
-        const videoUrl = href.split('?')[0];
+        const videoUrl = href.split("?")[0];
 
-        const video = document.createElement('video');
-        video.setAttribute('preload', 'metadata');
-        video.setAttribute('playsinline', '');
-        video.setAttribute('controls', '');
-        video.setAttribute('title', videoTitle);
+        const video = document.createElement("video");
+        video.setAttribute("preload", "metadata");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("controls", "");
+        video.setAttribute("title", videoTitle);
 
         if (autoplay) {
-          video.setAttribute('autoplay', '');
-          video.setAttribute('muted', '');
+          video.setAttribute("autoplay", "");
+          video.setAttribute("muted", "");
         }
-        if (loop) video.setAttribute('loop', '');
-        if (muted) video.setAttribute('muted', '');
+        if (loop) video.setAttribute("loop", "");
+        if (muted) video.setAttribute("muted", "");
 
-        const sourceEl = document.createElement('source');
-        sourceEl.setAttribute('src', videoUrl);
+        const sourceEl = document.createElement("source");
+        sourceEl.setAttribute("src", videoUrl);
 
-        const ext = videoUrl.split('.').pop()?.toLowerCase() || 'mp4';
+        const ext = videoUrl.split(".").pop()?.toLowerCase() || "mp4";
         const mimeTypes = {
-          mp4: 'video/mp4',
-          webm: 'video/webm',
-          ogg: 'video/ogg',
-          mov: 'video/quicktime',
-          m4v: 'video/mp4',
-          mkv: 'video/x-matroska',
+          mp4: "video/mp4",
+          webm: "video/webm",
+          ogg: "video/ogg",
+          mov: "video/quicktime",
+          m4v: "video/mp4",
+          mkv: "video/x-matroska",
         };
-        sourceEl.setAttribute('type', mimeTypes[ext] || 'video/mp4');
+        sourceEl.setAttribute("type", mimeTypes[ext] || "video/mp4");
 
         video.appendChild(sourceEl);
         block.appendChild(video);
-        block.dataset.videoLoaded = 'false';
+        block.dataset.videoLoaded = "false";
 
-        video.addEventListener('loadedmetadata', () => {
-          block.dataset.videoLoaded = 'true';
+        video.addEventListener("loadedmetadata", () => {
+          block.dataset.videoLoaded = "true";
         });
 
-        video.addEventListener('error', () => {
-          console.error('Error loading DM video:', videoUrl);
-          block.dataset.videoLoaded = 'error';
+        video.addEventListener("error", () => {
+          console.error("Error loading DM video:", videoUrl);
+          block.dataset.videoLoaded = "error";
         });
       }
     }
@@ -825,7 +881,8 @@ function whatBlockIsThis(element) {
   let currentElement = element;
 
   while (currentElement.parentElement) {
-    if (currentElement.parentElement.classList.contains('block')) return currentElement.parentElement;
+    if (currentElement.parentElement.classList.contains("block"))
+      return currentElement.parentElement;
     currentElement = currentElement.parentElement;
     if (currentElement.classList.length > 0) return currentElement.classList[0];
   }
@@ -837,10 +894,10 @@ function whatBlockIsThis(element) {
  * @param {Element} main The container element
  */
 function adjustAutoImages(main) {
-  const pictureElement = main.querySelector('div > p > picture');
+  const pictureElement = main.querySelector("div > p > picture");
   if (pictureElement) {
     const pElement = pictureElement.parentElement;
-    pElement.className = 'auto-image-container';
+    pElement.className = "auto-image-container";
   }
 }
 
@@ -850,7 +907,7 @@ function adjustAutoImages(main) {
  */
 function loadDelayed() {
   // eslint-disable-next-line import/no-cycle
-  window.setTimeout(() => import('./delayed.js'), 3000);
+  window.setTimeout(() => import("./delayed.js"), 3000);
   // load anything that can be postponed to the latest here
 }
 
@@ -860,5 +917,12 @@ async function loadPage() {
   await loadLazy(document);
   loadDelayed();
 }
+//added from https://docs.da.live/authors/reference/live-preview for DA preview, to load the script only when the query param is present
+(async function loadDa() {
+  if (!new URL(window.location.href).searchParams.get("dapreview")) return;
+  import("https://da.live/scripts/dapreview.js").then(
+    ({ default: daPreview }) => daPreview(loadPage),
+  );
+})();
 
 loadPage();
